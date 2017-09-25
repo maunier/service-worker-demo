@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>service-worker-demo</title>
+  <link rel="stylesheet" type="text/css" href="http://localhost:8080/index.css">
+</head>
+<body>
+  <script type="text/javascript">
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+
+        /* 
+          注册sw线程， 在同一个会话中，只会注册一次。
+          scope: 规定了sw可以操作的目录
+          chrome://inspect/#service-workers可以看到所有已经启动的sw
+          chrome://serviceworker-internals可以查看所有注册过的sw的详情
+        */
+        navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
+        }).then(function (registration) {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }).catch(function (err) {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+  </script>
+  <script type="text/javascript" src="http://localhost:8080/index.js"></script>
+</body>
+</html>
