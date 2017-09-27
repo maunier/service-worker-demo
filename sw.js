@@ -1,6 +1,6 @@
 console.log('sw.js is running');
 
-var CACHE_NAME = 'my-site-cache-v1';
+var CACHE_NAME = 'my-site-cache-v7';
 var urlsToCache = [
   '/',
   '/index.css',
@@ -9,6 +9,7 @@ var urlsToCache = [
 ];
 
 this.addEventListener('install', function (event) {
+  console.log('sw installed!!!');
   event.waitUntil(
     caches.open(CACHE_NAME)
           .then(function (cache) {
@@ -28,25 +29,40 @@ this.addEventListener('fetch', function(event) {
             var fetchRequest = event.request.clone();
 
             return fetch(fetchRequest).then(function(response) {
-                var isValidResponse = !response || response.status !== 200 || response.type !== 'basic';
-
-                if(isValidResponse) {
+                if(isResponseFailed(response)) {
                   return response;
                 }
-
-                // IMPORTANT: Clone the response. A response is a stream
-                // and because we want the browser to consume the response
-                // as well as the cache consuming the response, we need
-                // to clone it so we have two streams.
-                var responseToCache = response.clone();
-
-                caches.open(CACHE_NAME)
-                      .then(function(cache) {
-                        cache.put(event.request, responseToCache);
-                      });
-
+                
+                cacheResponse(event.request, response, CACHE_NAME);
+                
                 return response;
             });
           })
   );
 });
+
+this.addEventListener('activate', function (event) {
+  console.log('sw activate!!!');
+  var cacheWhitelist = [CACHE_NAME];
+  
+  event.waitUntil(caches.keys().then(function (cacheNames) {
+    return Promise.all(cacheNames.map(function (cacheName) {
+      if (cacheWhitelist.indexOf(cacheName) <= 0) {
+        return caches.delete(cacheName);
+      }  
+    }));
+  }));
+});
+
+function isResponseFailed (response) {
+  return !response || response.status !== 200 || response.type !== 'basic';
+}
+
+function cacheResponse (request, response, cacheName) {
+  var responseToCache = response.clone();
+
+  caches.open(cacheName)
+        .then(function(cache) {
+          cache.put(request, responseToCache);
+        });
+}
